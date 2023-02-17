@@ -18,20 +18,25 @@ def main ():
     #agent = Human_Agent()
     run = True
     clock = pygame.time.Clock()
-    graphics.draw(hnefatafl.state)
+    graphics.draw(hnefatafl.state, [])
     pygame.display.update()
+    
+    possibleMoves = []
 
     while(run):
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                run = False
+            if event.type == pygame.MOUSEBUTTONUP:
+                possibleMoves = hnefatafl.handleMouseUp(event.pos)
+
 
             #action = agent.get_Action(event)
             #puzzle.move(action)
-            time.sleep(0.02)
+            #time.sleep(0.02)
 
-        graphics.draw(hnefatafl.state)
+        graphics.draw(hnefatafl.state, possibleMoves)
         pygame.display.update()
         
     pygame.quit()

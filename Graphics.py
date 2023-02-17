@@ -7,22 +7,29 @@ import time
 
 pygame.init()
 
-class Graphics:
+class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditional instead of y_x.
     def __init__(self, win):
         # self.board = state.board
         # self.rows, self.cols = self.board.shape
-        self.win = win
+        self.win = win 
         self.loadImages()
     
     def loadImages(self):
         self.img_attacker = self.loadImage('imgs/attacker.png', ((SQUARE_SIZE - (MARGIN * 2)) // 1.2, (SQUARE_SIZE - (MARGIN * 2)) // 1.2)) 
         self.img_defender = self.loadImage('imgs/defender.png', ((SQUARE_SIZE - (MARGIN * 2)) // 1.2, (SQUARE_SIZE - (MARGIN * 2)) // 1.2))
         self.img_king = self.loadImage('imgs/king.png', ((SQUARE_SIZE - (MARGIN * 2)), (SQUARE_SIZE - (MARGIN * 2))))
+
         self.img_square = self.loadImage('imgs/square.png', (SQUARE_SIZE - (MARGIN * 2), SQUARE_SIZE - (MARGIN * 2)))
         self.img_square_king = self.loadImage('imgs/square_king.png', (SQUARE_SIZE - MARGIN * 2, SQUARE_SIZE - MARGIN * 2))
-        self.img_sit_attacker = self.loadImage('imgs/sit_attacker.png', ((SQUARE_SIZE - MARGIN * 2) // 2, (SQUARE_SIZE - MARGIN * 2) // 2))
-        self.img_sit_defender = self.loadImage('imgs/sit_defender.png', ((SQUARE_SIZE - MARGIN * 2) // 2, (SQUARE_SIZE - MARGIN * 2) // 2))
-        self.img_sit_king = self.loadImage('imgs/sit_king.png', ((SQUARE_SIZE - MARGIN * 2) // 1.5, (SQUARE_SIZE - MARGIN * 2) // 1.5))
+
+        self.img_sit_attacker = self.loadImage('imgs/sit_attacker.png', ((SQUARE_SIZE - MARGIN * 2) // 1.8, (SQUARE_SIZE - MARGIN * 2) // 1.8))
+        self.img_sit_defender = self.loadImage('imgs/sit_defender.png', ((SQUARE_SIZE - MARGIN * 2) // 1.8, (SQUARE_SIZE - MARGIN * 2) // 1.8))
+        self.img_sit_king = self.loadImage('imgs/sit_king.png', ((SQUARE_SIZE - MARGIN * 2) // 1.3, (SQUARE_SIZE - MARGIN * 2) // 1.3))
+
+        self.img_table_attacker = self.loadImage('imgs/table_attacker.png', (SQUARE_SIZE - self.img_sit_attacker.get_size()[0] + MARGIN * 2, SQUARE_SIZE * 2 - (self.img_sit_attacker.get_size()[0]) + MARGIN * 2))
+        self.img_table_defender = self.loadImage('imgs/table_defender.png', (SQUARE_SIZE - self.img_sit_defender.get_size()[0] + MARGIN * 2, SQUARE_SIZE * 2 - (self.img_sit_defender.get_size()[0]) + MARGIN * 2))
+
+
         self.img_corner_down_right = self.loadImage('imgs/corner_down_right.png', (SQUARE_SIZE - MARGIN * 2, SQUARE_SIZE - MARGIN * 2))
         
         self.img_border = self.loadImage('imgs/border.png', (SQUARE_SIZE // 2, SQUARE_SIZE * 5.5))
@@ -60,16 +67,45 @@ class Graphics:
                 pygame.draw.rect(self.win, BLACK, (*self.calc_base_pos(row_col), SQUARE_SIZE, SQUARE_SIZE), MARGIN) # margin of squares 
 
 
-                # draw sits
+    def drawTablesandSits(self):
+        for row_col in ATTACKERSQS:
+            possit = self.calc_piece_pos(row_col, self.img_sit_attacker.get_size())
+            self.win.blit(self.img_sit_attacker, possit) # draw attacker sit
+        for row_col in DEFENDERSQS:
+            possit = self.calc_piece_pos(row_col, self.img_sit_defender.get_size())
+            self.win.blit(self.img_sit_defender, possit) # draw defender sit
+        
+        self.win.blit(self.img_sit_king, self.calc_piece_pos(CENTERSQ, self.img_sit_king.get_size()))
 
-    def draw_all_pieces(self, state:State):
+        count = 0
+        img = self.img_table_attacker
+        for row_col in ATTACKERTABLESLCS:
+            if count == 4:
+                img = pygame.transform.rotate(img, 90)
+            pos = self.calc_base_pos(row_col)
+            self.win.blit(img, pos)
+
+            count += 1
+        
+        count = 0
+        img = self.img_table_defender
+        for row_col in DEFENDERTABLESLCS:
+            if count == 2:
+                img = pygame.transform.rotate(img, 90)
+            pos = self.calc_base_pos(row_col)
+            self.win.blit(img, pos)
+
+            count += 1
+        
+      
+    def draw_all_pieces(self, state:State): # and sits
         board = state.board
         for row in range(len(board)): # row : String
             for col in range(len(board[0])):
                 if board[row][col] != '.':
                     self.draw_piece(state, (row, col))
             
-    def draw_piece(self, state:State, row_col ):
+    def draw_piece(self, state:State, row_col): # and sit
         row, col = row_col
         board = state.board
         piece = board[row][col]
@@ -82,7 +118,7 @@ class Graphics:
             case 'k':
                 img = self.img_king
         pos = self.calc_piece_pos(row_col, img.get_size())
-        self.win.blit(img, pos)
+        self.win.blit(img, pos) # draw piece
 
     def drawCaption(self, caption):
         row_col = (12, 5)        
@@ -91,7 +127,7 @@ class Graphics:
         textPos = self.calc_num_pos(row_col, font, caption)
         self.win.blit(text, textPos)
 
-    def drawBorder(self):
+    def drawBorder(self): # and tables
         self.win.blit(self.img_border, (0, SQUARE_SIZE // 2))
         self.win.blit(self.img_border, (0, SQUARE_SIZE // 2 + SQUARE_SIZE * 5.5))
         # TODO: Copy this border to every line
@@ -123,6 +159,12 @@ class Graphics:
             row_col = np.divide(row_col, (10, 10))
             self.win.blit(border_corner, (row_col[0] * (SQUARE_SIZE * 11 + BORDER), row_col[1] * (SQUARE_SIZE * 11 + BORDER)))
 
+            # attacker tables:
+
+
+    def drawPossibleMoves(self, possibleMoves : list[tuple]):
+        for row_col in possibleMoves:
+            pygame.draw.circle(self.win, PICKED_COLOR, self.calc_pos(row_col), POSSIBLE_MOVES_RADIUS)
 
     def calc_pos(self, row_col):
         row, col = row_col
@@ -160,11 +202,13 @@ class Graphics:
             color = SQUARE_COLOR
         return color
 
-    def draw(self, state):
+    def draw(self, state, possibleMoves):
         self.win.fill(LIGHTGRAY)
         self.drawAllSquares(state)
-        self.draw_all_pieces(state)
         self.drawBorder()
+        self.drawTablesandSits()
+        self.draw_all_pieces(state)
+        self.drawPossibleMoves(possibleMoves)
         self.drawCaption("Attacker's Turn!")
 
     def draw_square(self, row_col, color):
