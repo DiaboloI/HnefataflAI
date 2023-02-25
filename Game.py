@@ -1,9 +1,10 @@
 import pygame
 from Graphics import Graphics
+from Human_Agent import Human_Agent
+from Player import Player
 from constant import *
 from State import State
 from Hnefatafl import Hnefatafl
-#from Human_Agent import Human_Agent
 import time
 
 
@@ -15,31 +16,48 @@ def main ():
     
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
-    #agent = Human_Agent()
+    attacker = Human_Agent(Player.ATTACKER)
+    defender = Human_Agent(Player.DEFENDER)
     run = True
     clock = pygame.time.Clock()
-    graphics.draw(hnefatafl.state, [])
+    graphics.draw(hnefatafl.state, [], True)
     pygame.display.update()
     
+    player = attacker
     possibleMoves = []
+    moved = False
+    
+    action = None
+    won = None
 
     while(run):
         clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                run = False
-            if event.type == pygame.MOUSEBUTTONUP:
-                possibleMoves = hnefatafl.handleMouseUp(event.pos)
+            action = player.get_Action(event, graphics)
+        if action:
+            possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)
+            if moved:
+                if player == attacker:
+                    player = defender
+                else:
+                    player = attacker
+                won = hnefatafl.isWon()
+            action = None
 
 
-            #action = agent.get_Action(event)
-            #puzzle.move(action)
-            #time.sleep(0.02)
-
-        graphics.draw(hnefatafl.state, possibleMoves)
+        graphics.draw(hnefatafl.state, possibleMoves, player == attacker)
         pygame.display.update()
         
+        if won:
+            run = False
+            print (str(won) + " won!") #TODO: make a caption on the screen announcing the victory.
+        
+
+       
     pygame.quit()
+    
 
 if __name__ == '__main__':
     main()

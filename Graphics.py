@@ -119,9 +119,15 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
                 img = self.img_king
         pos = self.calc_piece_pos(row_col, img.get_size())
         self.win.blit(img, pos) # draw piece
+    
+    def drawTurnCaption(self, attackerTurn):
+        row_col = (12, 5)
+        if attackerTurn:
+            self.drawCaption("Attacker's Turn!", row_col)
+        else:
+            self.drawCaption("Defender's Turn!", row_col)
 
-    def drawCaption(self, caption):
-        row_col = (12, 5)        
+    def drawCaption(self, caption, row_col):        
         font = pygame.font.SysFont('ariel', (SQUARE_SIZE - (MARGIN*2)))
         text = font.render(caption, 1, BLACK)
         textPos = self.calc_num_pos(row_col, font, caption)
@@ -171,6 +177,12 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         y = row * SQUARE_SIZE + SQUARE_SIZE//2 + BORDER
         x = col * SQUARE_SIZE + SQUARE_SIZE//2 + BORDER
         return x, y
+    
+    def calcRowcol(self, pos : tuple):
+        x, y = pos
+        row = ((y - BORDER) / SQUARE_SIZE) // 1
+        col = ((x - BORDER) / SQUARE_SIZE) // 1
+        return int(row), int(col)
 
     def calc_base_pos(self, row_col):
         row, col = row_col
@@ -202,14 +214,14 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
             color = SQUARE_COLOR
         return color
 
-    def draw(self, state, possibleMoves):
+    def draw(self, state, possibleMoves, attackerTurn):
         self.win.fill(LIGHTGRAY)
         self.drawAllSquares(state)
         self.drawBorder()
         self.drawTablesandSits()
         self.draw_all_pieces(state)
         self.drawPossibleMoves(possibleMoves)
-        self.drawCaption("Attacker's Turn!")
+        self.drawTurnCaption(attackerTurn)
 
     def draw_square(self, row_col, color):
         pos = self.calc_base_pos(row_col)
