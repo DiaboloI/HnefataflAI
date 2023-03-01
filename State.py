@@ -1,4 +1,4 @@
-
+from copy import deepcopy
 
 class State:
     def __init__(self, board):
@@ -8,5 +8,5 @@ class State:
         return self.board == other.board
 
     def copy (self):
-        newBoard = self.board.copy()
+        newBoard = deepcopy(self.board)
         return State (newBoard)
