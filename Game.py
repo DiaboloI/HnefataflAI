@@ -18,11 +18,11 @@ def main ():
     
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
-    #attacker = Human_Agent(Player.ATTACKER)
-    attacker = Ai_Agent(Player.ATTACKER)
-    #defender = Human_Agent(Player.DEFENDER)
+    attacker = Human_Agent(Player.ATTACKER)
+    #attacker = Ai_Agent(Player.ATTACKER)
+    defender = Human_Agent(Player.DEFENDER)
     #defender = Ai_Agent(Player.DEFENDER)
-    defender = Random_Agent(Player.DEFENDER)
+    #defender = Random_Agent(Player.DEFENDER)
     run = True
     clock = pygame.time.Clock()
     graphics.draw(hnefatafl.state, [], True)
@@ -42,15 +42,14 @@ def main ():
                run = False
             action = player.getAction(event, graphics, hnefatafl.state, player == attacker)
         if action:
-            #if not player == defender:
-            #    possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)
-            #else:
-            time.sleep(1)
-            print (action)
-            print(player)
-            hnefatafl.state = hnefatafl.move(action[0], action[1], hnefatafl.state)
-            moved = True
-            if moved:
+            if type(player) is Human_Agent:
+                possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)
+            else:
+                hnefatafl.state = hnefatafl.move(action[0], action[1], hnefatafl.state)
+                moved = True
+            
+
+            if moved: # change turn.
                 if player == attacker:
                     player = defender
                 else:

@@ -29,10 +29,8 @@ class Hnefatafl:
                  ['.','.','.','a','a','a','a','a','.','.','.']]
 
         return State(board.copy())
+   
 
-    def is_legal_action (self, state:State = None):
-        pass
-        
     def getActions (self, isAttackerTurn : bool, state: State):
         actions = set([])
         piecesTurn = []
@@ -120,9 +118,9 @@ class Hnefatafl:
     
     def getOppositePiece(self, piece):
         if piece == 'a':
-            return 'd'
+            return 'd', 'k'
         else:
-            return 'a'
+            return ('a')
 
     def isSquareDeadly(self, piece, square, state : State):
         board = state.board
@@ -138,12 +136,38 @@ class Hnefatafl:
         else:
             return False
 
+    def areThereSurroundingPieces(self, state: State, square : tuple, pieces : tuple):
+        row, col = square
+        board = state.board
+
+        if (row > 0 and board[row - 1][col] in pieces) or (row < 10 and board[row + 1][col] in pieces) or (col > 0 and board[row][col - 1] in pieces) or (col < 10 and board[row][col + 1] in pieces):
+            return True
+        return False
+
+    def checkForShieldWall(self, state: State, move : tuple):
+        row, col = move
+        board = state.board
+        # simple checks to eliminate cases which are clearly not shield wall:
+
+        if (row > 1 and row < 9 and col > 1 and col < 9) or not self.areThereSurroundingPieces(state, move, self.getOppositePiece(board[row][col])):
+            return # The shield wall only works in the edges.
+
+
+    
+
+
+
+
+
+
+
+
     def checkIfCapture(self, state : State, move : tuple): # add sound effects and color effects
         row, col = move
         board = state.board
         thisPiece = board[row][col]
         
-        oppositePiece = self.getOppositePiece(thisPiece)
+        oppositePiece = self.getOppositePiece(thisPiece)[0] # king is not relevant here.
 
         if row > 1 and board[row - 1][col] == oppositePiece and self.isSquareDeadly(oppositePiece, (row - 2, col), state):
             board[row - 1][col] = '.'
@@ -153,6 +177,8 @@ class Hnefatafl:
             board[row][col - 1] = '.'
         if col < 9 and board[row][col + 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col + 2), state):
             board[row][col + 1] = '.'
+
+
 
     def getKingRowcol(self, state : State):
         for row in range(len(state.board)):

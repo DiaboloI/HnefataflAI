@@ -11,6 +11,9 @@ class Ai_Agent:
     def __init__(self, player : Player):
         self.player = player
         self.hnefatafl = Hnefatafl()
+    
+    def pathToWin(self, state): # check if it is a forced win.
+        pass
 
     def calculateKingManhattanDistance(self, state):
         corners = SPECIALSQS - {CENTERSQ}
@@ -46,7 +49,7 @@ class Ai_Agent:
             else:
                 return -math.inf
 
-        score = 10 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state)
+        score = 2 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state)
 
         return score
 
