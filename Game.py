@@ -20,8 +20,8 @@ def main ():
     graphics = Graphics(win)
     attacker = Human_Agent(Player.ATTACKER)
     #attacker = Ai_Agent(Player.ATTACKER)
-    #defender = Human_Agent(Player.DEFENDER)
-    defender = Ai_Agent(Player.DEFENDER)
+    defender = Human_Agent(Player.DEFENDER)
+    #defender = Ai_Agent(Player.DEFENDER)
     #defender = Random_Agent(Player.DEFENDER)
     run = True
     clock = pygame.time.Clock()
@@ -57,7 +57,7 @@ def main ():
                 won = hnefatafl.isWon(hnefatafl.state)
             action = None
 
-
+        
         graphics.draw(hnefatafl.state, possibleMoves, player == attacker)
         pygame.display.update()
         
@@ -66,14 +66,17 @@ def main ():
             if won is str: # draw
                 print ("The game ends in a draw: " + str(won) + ".")
             else:
-                print (str(won) + " won!") #TODO: make a caption on the screen announcing the victory.
+                graphics.drawWinningMessage(won)
+                pygame.display.update()
+                print (str(won) + " won!")
+                time.sleep(20)
         
 
        
     pygame.quit()
     
 
-def printBoard(state : State):
+def printBoard(state : State): # for debugging
     for row in state.board:
         print(row)
 

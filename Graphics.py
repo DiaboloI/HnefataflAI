@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+from Player import Player
 from constant import *
 import State
 import time
@@ -127,11 +128,25 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         else:
             self.drawCaption("Defender's Turn!", row_col)
 
-    def drawCaption(self, caption, row_col):        
+    def drawCaption(self, caption, row_col): 
         font = pygame.font.SysFont('ariel', (SQUARE_SIZE - (MARGIN*2)))
         text = font.render(caption, 1, BLACK)
         textPos = self.calc_num_pos(row_col, font, caption)
         self.win.blit(text, textPos)
+
+    def drawWinningMessage(self, winner):
+        winn = ""
+        if type(winner) is Player.ATTACKER:
+            winn = "Attacker"
+        else:
+            winn = "Defender"
+
+        font = pygame.font.SysFont('ariel', HEIGHT // 7)
+        text = font.render(winn + " won!", 1, RED)
+        textPos = (WIDTH // 10, HEIGHT // 2.5)
+        pygame.draw.rect(self.win, WHITE, (*textPos, WIDTH // 1.3, HEIGHT // 10))
+        self.win.blit(text, textPos)
+
 
     def drawBorder(self): # and tables
         self.win.blit(self.img_border, (0, SQUARE_SIZE // 2))
