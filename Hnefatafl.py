@@ -15,6 +15,14 @@ class Hnefatafl:
         self.currentPiece = ()
         self.possibleMoves = []
 
+        self.repetitionCount = 0
+        self.repetitionPattern = []
+        self.currentPattern = []
+
+        self.isDraw = False
+
+        self.winner = False
+
     def getStartingPosition(self):
         board = [['.','.','.','a','a','a','a','a','.','.','.'],
                  ['.','.','.','.','.','a','.','.','.','.','.'],
@@ -45,6 +53,12 @@ class Hnefatafl:
                 if state.board[row][col] in piecesTurn:
                     for action in self.get_piece_actions((row, col), state):
                         actions.add(((row, col), action))
+
+        if len(actions) == 0:
+            if isAttackerTurn:
+                self.winner = Player.ATTACKER
+            else:
+                self.winner = Player.DEFENDER
         return actions
 
 
@@ -95,16 +109,24 @@ class Hnefatafl:
         if not self.state.board[row_col[0]][row_col[1]] == '.':
             return True
         return False
+    
+    def isOutofRange(self, row_col):
+        row, col = row_col
+
+        if row < 0 or row > 10 or col < 0 or col > 10:
+            return True
+        return False
 
     def handleMouseClick(self, row_col, attackerTurn):
         moved = False
-        if self.isAPiece(row_col) and self.isPieceTurn(row_col, attackerTurn):
-            self.possibleMoves = self.get_piece_actions(row_col, self.state)
-            self.currentPiece = row_col
-        elif row_col in self.possibleMoves:
-            self.state = self.move(self.currentPiece, row_col, self.state)
-            self.possibleMoves = []
-            moved = True
+        if not self.isOutofRange(row_col):
+            if self.isAPiece(row_col) and self.isPieceTurn(row_col, attackerTurn):
+                self.possibleMoves = self.get_piece_actions(row_col, self.state)
+                self.currentPiece = row_col
+            elif row_col in self.possibleMoves:
+                self.state = self.move(self.currentPiece, row_col, self.state)
+                self.possibleMoves = []
+                moved = True
         return self.possibleMoves.copy(), moved
 
     def captured(self, state : State, square):
@@ -114,8 +136,10 @@ class Hnefatafl:
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
         newState.board[pieceRowcol[0]][pieceRowcol[1]] = '.'
-
+        
         self.checkIfCapture(newState, destRowcol)
+        
+        self.isDraw = self.repetition(pieceRowcol, destRowcol)
 
         return newState
     
@@ -184,8 +208,8 @@ class Hnefatafl:
         surPieces = self.getSurroundingPieces(state, move, self.getOppositePiece(board[row][col]))
 
         if (row > 1 and row < 9 and col > 1 and col < 9) or not surPieces:
-            print ((row > 1 and row < 9 and col > 1 and col < 9))
-            print (surPieces)
+            #print ((row > 1 and row < 9 and col > 1 and col < 9))
+            #print (surPieces)
             return # The shield wall only works in the edges.
 
         #print ("sur: " + str(surPieces))
@@ -225,15 +249,29 @@ class Hnefatafl:
         
 
 
+    def repetition(self, moveSrc : tuple, moveDst : tuple):
+        isDraw = False
+        
+        self.currentPattern.append((moveSrc, moveDst))
 
+        if len(self.currentPattern) == 4:
+            if self.currentPattern == self.repetitionPattern:
+                self.repetitionCount += 1
+                if self.repetitionCount == MAXREPETITION:
+                    isDraw = True
+            else:
+                self.repetitionCount = 0
+                self.repetitionPattern = self.currentPattern.copy()
+
+
+            self.currentPattern = []
+        
+        
+        return isDraw
+
+            
+            
     
-
-
-
-
-
-
-
 
     def checkIfCapture(self, state : State, move : tuple): # add sound effects and color effects
         row, col = move
@@ -260,7 +298,14 @@ class Hnefatafl:
             for col in range(len(state.board[0])):
                 if state.board[row][col] == 'k':
                     return row, col
+
     def isWon(self, state : State):
+        if self.winner:
+            return self.winner
+
+        if self.isDraw:
+            return "repetition"
+
         for row_col in SPECIALSQS - {CENTERSQ}:
             row, col = row_col
             if 'k' == state.board[row][col]:

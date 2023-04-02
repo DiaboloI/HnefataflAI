@@ -15,6 +15,21 @@ class Ai_Agent:
     def pathToWin(self, state): # check if it is a forced win.
         pass
 
+    def countAttackersWhoBlockCorners(self, state):
+        count = 0
+        BLOCKSSQUARES = set([(0, 2), (1, 1), (2, 0), (0, 8), (1, 9), (2, 10), (8, 0), (9, 1), (10, 2), (10, 8), (9, 9), (8, 10)])
+
+        for square in BLOCKSSQUARES:
+            pType = state.board[square[0]][square[1]] 
+            if pType == 'a':
+                count += 1
+            elif pType == 'd':
+                count -= 1
+            elif pType == 'k':
+                count -= 4
+
+        return count
+
     def calculateKingManhattanDistance(self, state):
         corners = SPECIALSQS - {CENTERSQ}
         minDistance = 1000
@@ -29,17 +44,16 @@ class Ai_Agent:
 
     
     def pieceCountDifference(self, state):
-        attacksCount = 0
-        defendersCount = 0
+        count = 0
 
         for row in state.board:
             for square in row:
                 if square == 'a':
-                    attacksCount += 1
+                    count += 1
                 elif square == 'd' or square == 'k':
-                    defendersCount += 1
+                    count -= 1
 
-        return attacksCount - defendersCount
+        return count
 
     def eval(self, state : State):
         won = self.hnefatafl.isWon(state) # king on squares next to corner also wins
@@ -48,8 +62,16 @@ class Ai_Agent:
                 return math.inf
             else:
                 return -math.inf
+        kingRowcol = self.hnefatafl.getKingRowcol(state)
 
-        score = 2 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state)
+        for corner in (SPECIALSQS - {CENTERSQ}):
+            if kingRowcol in self.hnefatafl.getSurroundingSquares(corner):
+                return -100000
+        edgeScore = 0
+        if self.hnefatafl.inEdges(kingRowcol, 1):
+            edgeScore = 10
+
+        score = 3 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state) + self.countAttackersWhoBlockCorners(state) * 3  - edgeScore * 2
 
         return score
 

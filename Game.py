@@ -20,8 +20,8 @@ def main ():
     graphics = Graphics(win)
     attacker = Human_Agent(Player.ATTACKER)
     #attacker = Ai_Agent(Player.ATTACKER)
-    defender = Human_Agent(Player.DEFENDER)
-    #defender = Ai_Agent(Player.DEFENDER)
+    #defender = Human_Agent(Player.DEFENDER)
+    defender = Ai_Agent(Player.DEFENDER)
     #defender = Random_Agent(Player.DEFENDER)
     run = True
     clock = pygame.time.Clock()
@@ -63,7 +63,10 @@ def main ():
         
         if won:
             run = False
-            print (str(won) + " won!") #TODO: make a caption on the screen announcing the victory.
+            if won is str: # draw
+                print ("The game ends in a draw: " + str(won) + ".")
+            else:
+                print (str(won) + " won!") #TODO: make a caption on the screen announcing the victory.
         
 
        
