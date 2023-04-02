@@ -107,6 +107,9 @@ class Hnefatafl:
             moved = True
         return self.possibleMoves.copy(), moved
 
+    def captured(self, state : State, square):
+        state.board[square[0]][square[1]] = '.'
+
     def move(self, pieceRowcol, destRowcol, state : State):
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
@@ -136,11 +139,40 @@ class Hnefatafl:
         else:
             return False
 
-    def areThereSurroundingPieces(self, state: State, square : tuple, pieces : tuple):
+    def getSurroundingSquares(self, square : tuple):
         row, col = square
+
+        surSquares = []
+
+        if row > 0:
+            surSquares.append((row - 1, col))
+
+        if row < 10:
+            surSquares.append((row + 1, col))
+
+        if col > 0:
+            surSquares.append((row, col - 1))
+
+        if col < 10:
+            surSquares.append((row, col + 1))
+        
+        return surSquares
+
+    def getSurroundingPieces(self, state: State, square : tuple, pieces : tuple):
         board = state.board
 
-        if (row > 0 and board[row - 1][col] in pieces) or (row < 10 and board[row + 1][col] in pieces) or (col > 0 and board[row][col - 1] in pieces) or (col < 10 and board[row][col + 1] in pieces):
+        surPieces = []
+
+        for surSq in self.getSurroundingSquares(square):
+            if board[surSq[0]][surSq[1]] in pieces:
+                surPieces.append(surSq)
+        
+        return surPieces
+
+    def inEdges(self, square : tuple, edge : int):
+        row, col = square
+
+        if (row < edge or row > (10 - edge) or col < edge or col > (10 - edge)):
             return True
         return False
 
@@ -149,8 +181,49 @@ class Hnefatafl:
         board = state.board
         # simple checks to eliminate cases which are clearly not shield wall:
 
-        if (row > 1 and row < 9 and col > 1 and col < 9) or not self.areThereSurroundingPieces(state, move, self.getOppositePiece(board[row][col])):
+        surPieces = self.getSurroundingPieces(state, move, self.getOppositePiece(board[row][col]))
+
+        if (row > 1 and row < 9 and col > 1 and col < 9) or not surPieces:
+            print ((row > 1 and row < 9 and col > 1 and col < 9))
+            print (surPieces)
             return # The shield wall only works in the edges.
+
+        #print ("sur: " + str(surPieces))
+
+        for piece in surPieces:
+            shield = True
+            shieldCaptured = []
+            if self.inEdges(piece, 1):
+                #print ("In, " + str(piece) + " type: " + str(board[piece[0]][piece[1]]))
+                queue = [piece]
+                visited = []
+                while queue:
+                    if not shield:
+                        break
+                    curPiece = queue.pop()
+                    #print("cur: " + str(curPiece))
+                    if not curPiece in visited:
+                        visited.append(curPiece)
+                        shieldCaptured.append(curPiece)
+                        for surPiece in self.getSurroundingSquares(curPiece):
+                            pieceType = board[surPiece[0]][surPiece[1]]
+                            if pieceType == '.' and not surPiece in SPECIALSQS:
+                                shield = False
+                                break
+                            elif pieceType in self.getOppositePiece(piece): # No idea why it works? this needs investigating.
+                                queue.insert(0, surPiece)
+                                #print("surPiece: " + str(surPiece) + " type: " + str(pieceType))
+            #print (shield)
+            #print (shieldCaptured)
+            if shield:
+                for capt in shieldCaptured:
+                    if not board[capt[0]][capt[1]] == 'k':
+                        self.captured(state, capt)
+
+
+
+        
+
 
 
     
@@ -177,6 +250,8 @@ class Hnefatafl:
             board[row][col - 1] = '.'
         if col < 9 and board[row][col + 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col + 2), state):
             board[row][col + 1] = '.'
+
+        self.checkForShieldWall(state, move)
 
 
 
