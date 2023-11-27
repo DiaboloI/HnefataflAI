@@ -299,6 +299,16 @@ class Hnefatafl:
                 if state.board[row][col] == 'k':
                     return row, col
 
+    def pieceCount(self, state, player):
+        count = 0
+
+        for row in state.board:
+            for square in row:
+                if square == player:
+                    count += 1
+
+        return count
+
     def isWon(self, state : State):
         if self.winner:
             return self.winner
@@ -317,5 +327,14 @@ class Hnefatafl:
             if board[row - 1][col] == 'a' and board[row + 1][col] == 'a' and board[row][col - 1] == 'a' and board[row][col + 1] == 'a':
                 return Player.ATTACKER
 
+
+        if self.pieceCount(state, 'd') == 0:
+            countSqs = 0
+            surround = self.getSurroundingSquares(self.getKingRowco(state))
+            for sq in surround:
+                if sq == 'a':
+                    countSqs += 1
+            if countSqs == len(surround):
+                return Player.ATTACKER
 
         return None
