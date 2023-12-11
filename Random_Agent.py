@@ -13,6 +13,5 @@ class Random_Agent:
         actions = self.hnefatafl.getActions(attackerTurn, state)
 
         randomMove = random.randint(0, len(actions) - 1)
-        print (list(actions))
         return list(actions)[randomMove]
 

@@ -21,11 +21,11 @@ class Ai_Agent:
 
         for square in BLOCKSSQUARES:
             pType = state.board[square[0]][square[1]] 
-            if pType == 'a':
+            if pType == 1:
                 count += 1
-            elif pType == 'd':
+            elif pType == 2:
                 count -= 1
-            elif pType == 'k':
+            elif pType == 3:
                 count -= 4
 
         return count
@@ -48,9 +48,9 @@ class Ai_Agent:
 
         for row in state.board:
             for square in row:
-                if square == 'a':
+                if square == 1:
                     count += 1
-                elif square == 'd' or square == 'k':
+                elif square == 2 or square == 3:
                     count -= 1
 
         return count

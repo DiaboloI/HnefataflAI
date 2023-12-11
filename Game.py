@@ -18,7 +18,8 @@ def main ():
     
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
-    attacker = Human_Agent(Player.ATTACKER)
+    #attacker = Human_Agent(Player.ATTACKER)
+    attacker = Random_Agent(Player.ATTACKER)
     #attacker = Ai_Agent(Player.ATTACKER)
     #defender = Human_Agent(Player.DEFENDER)
     defender = Ai_Agent(Player.DEFENDER)
@@ -37,10 +38,12 @@ def main ():
 
     while(run):
         clock.tick(FPS)
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                run = False
-            action = player.getAction(event, graphics, hnefatafl.state, player == attacker)
+
+        action = player.getAction(events, graphics, hnefatafl.state, player == attacker)
         if action:
             if type(player) is Human_Agent:
                 possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)

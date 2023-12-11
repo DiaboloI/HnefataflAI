@@ -23,18 +23,19 @@ class Hnefatafl:
 
         self.winner = False
 
+# . = 0, a = 1, d = 2, k = 3
     def getStartingPosition(self):
-        board = [['.','.','.','a','a','a','a','a','.','.','.'],
-                 ['.','.','.','.','.','a','.','.','.','.','.'],
-                 ['.','.','.','.','.','.','.','.','.','.','.'],
-                 ['a','.','.','.','.','d','.','.','.','.','a'],
-                 ['a','.','.','.','d','d','d','.','.','.','a'],
-                 ['a','a','.','d','d','k','d','d','.','a','a'],
-                 ['a','.','.','.','d','d','d','.','.','.','a'],
-                 ['a','.','.','.','.','d','.','.','.','.','a'],
-                 ['.','.','.','.','.','.','.','.','.','.','.'],
-                 ['.','.','.','.','.','a','.','.','.','.','.'],
-                 ['.','.','.','a','a','a','a','a','.','.','.']]
+        board = [[0,0,0,1,1,1,1,1,0,0,0],
+                 [0,0,0,0,0,1,0,0,0,0,0],
+                 [0,0,0,0,0,0,0,0,0,0,0],
+                 [1,0,0,0,0,2,0,0,0,0,1],
+                 [1,0,0,0,2,2,2,0,0,0,1],
+                 [1,1,0,2,2,3,2,2,0,1,1],
+                 [1,0,0,0,2,2,2,0,0,0,1],
+                 [1,0,0,0,0,2,0,0,0,0,1],
+                 [0,0,0,0,0,0,0,0,0,0,0],
+                 [0,0,0,0,0,1,0,0,0,0,0],
+                 [0,0,0,1,1,1,1,1,0,0,0]]
 
         return State(board.copy())
    
@@ -43,9 +44,9 @@ class Hnefatafl:
         actions = set([])
         piecesTurn = []
         if isAttackerTurn:
-            piecesTurn = ['a']
+            piecesTurn = [1]
         else:
-            piecesTurn = ['d', 'k']
+            piecesTurn = [2, 3]
 
 
         for row in range(len(state.board)):
@@ -63,32 +64,32 @@ class Hnefatafl:
 
 
     def get_piece_actions(self, piecePos : tuple, state : State):
-        isKing = state.board[piecePos[0]][piecePos[1]] == 'k'
-        isKinginCenter = state.board[CENTERSQ[0]][CENTERSQ[1]] == 'k'
+        isKing = state.board[piecePos[0]][piecePos[1]] == 3
+        isKinginCenter = state.board[CENTERSQ[0]][CENTERSQ[1]] == 3
         actions = set([])
         for i in range(piecePos[0] + 1, 11):
-            if state.board[i][piecePos[1]] == '.' and (not (i, piecePos[1]) in SPECIALSQS or isKing):
+            if state.board[i][piecePos[1]] == 0 and (not (i, piecePos[1]) in SPECIALSQS or isKing):
                 actions.add((i, piecePos[1]))
             elif (i, piecePos[1]) == CENTERSQ and not isKinginCenter:
                 continue
             else:
                 break
         for i in range(piecePos[0] - 1, -1, -1):
-            if state.board[i][piecePos[1]] == '.' and (not (i, piecePos[1]) in SPECIALSQS or isKing):
+            if state.board[i][piecePos[1]] == 0 and (not (i, piecePos[1]) in SPECIALSQS or isKing):
                 actions.add((i, piecePos[1]))
             elif (i, piecePos[1]) == CENTERSQ and not isKinginCenter:
                 continue
             else:
                 break
         for i in range(piecePos[1] + 1, 11):
-            if state.board[piecePos[0]][i] == '.' and (not (piecePos[0], i) in SPECIALSQS or isKing):
+            if state.board[piecePos[0]][i] == 0 and (not (piecePos[0], i) in SPECIALSQS or isKing):
                 actions.add((piecePos[0], i))
             elif (piecePos[0], i) == CENTERSQ and not isKinginCenter:
                 continue
             else:
                 break
         for i in range(piecePos[1] - 1, -1, -1):
-            if state.board[piecePos[0]][i] == '.' and (not (piecePos[0], i) in SPECIALSQS or isKing):
+            if state.board[piecePos[0]][i] == 0 and (not (piecePos[0], i) in SPECIALSQS or isKing):
                 actions.add((piecePos[0], i))
             elif (piecePos[0], i) == CENTERSQ and not isKinginCenter:
                 continue
@@ -98,15 +99,15 @@ class Hnefatafl:
     
     def isPieceTurn(self, row_col, attackerTurn):
         row, col = row_col
-        if attackerTurn and self.state.board[row][col] == 'a':
+        if attackerTurn and self.state.board[row][col] == 1:
             return True
-        elif not attackerTurn and (self.state.board[row][col] == 'd' or self.state.board[row][col] == 'k'):
+        elif not attackerTurn and (self.state.board[row][col] == 2 or self.state.board[row][col] == 3):
             return True
         else:
             return False
     
     def isAPiece(self, row_col):
-        if not self.state.board[row_col[0]][row_col[1]] == '.':
+        if not self.state.board[row_col[0]][row_col[1]] == 0:
             return True
         return False
     
@@ -130,12 +131,12 @@ class Hnefatafl:
         return self.possibleMoves.copy(), moved
 
     def captured(self, state : State, square):
-        state.board[square[0]][square[1]] = '.'
+        state.board[square[0]][square[1]] = 0
 
     def move(self, pieceRowcol, destRowcol, state : State):
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
-        newState.board[pieceRowcol[0]][pieceRowcol[1]] = '.'
+        newState.board[pieceRowcol[0]][pieceRowcol[1]] = 0
         
         self.checkIfCapture(newState, destRowcol)
         
@@ -144,21 +145,21 @@ class Hnefatafl:
         return newState
     
     def getOppositePiece(self, piece):
-        if piece == 'a':
-            return 'd', 'k'
+        if piece == 1:
+            return (2, 3)
         else:
-            return ('a')
+            return tuple([1])
 
     def isSquareDeadly(self, piece, square, state : State):
         board = state.board
         pieceOnSquare = board[square[0]][square[1]]
         deadlySpecialSqs = SPECIALSQS.copy()
 
-        if board[CENTERSQ[0]][CENTERSQ[1]] == 'k':
+        if board[CENTERSQ[0]][CENTERSQ[1]] == 3:
             deadlySpecialSqs -= {CENTERSQ}
 
 
-        if (piece != 'k' and square in deadlySpecialSqs) or (piece == 'd' and pieceOnSquare == 'a') or (piece == 'a' and (pieceOnSquare == 'd' or pieceOnSquare == 'k')):
+        if (piece != 3 and square in deadlySpecialSqs) or (piece == 2 and pieceOnSquare == 1) or (piece == 1 and (pieceOnSquare == 2 or pieceOnSquare == 3)):
             return True
         else:
             return False
@@ -231,7 +232,7 @@ class Hnefatafl:
                         shieldCaptured.append(curPiece)
                         for surPiece in self.getSurroundingSquares(curPiece):
                             pieceType = board[surPiece[0]][surPiece[1]]
-                            if pieceType == '.' and not surPiece in SPECIALSQS:
+                            if pieceType == 0 and not surPiece in SPECIALSQS:
                                 shield = False
                                 break
                             elif pieceType in self.getOppositePiece(piece): # No idea why it works? this needs investigating.
@@ -241,7 +242,7 @@ class Hnefatafl:
             #print (shieldCaptured)
             if shield:
                 for capt in shieldCaptured:
-                    if not board[capt[0]][capt[1]] == 'k':
+                    if not board[capt[0]][capt[1]] == 3:
                         self.captured(state, capt)
 
 
@@ -281,13 +282,13 @@ class Hnefatafl:
         oppositePiece = self.getOppositePiece(thisPiece)[0] # king is not relevant here.
 
         if row > 1 and board[row - 1][col] == oppositePiece and self.isSquareDeadly(oppositePiece, (row - 2, col), state):
-            board[row - 1][col] = '.'
+            board[row - 1][col] = 0
         if row < 9 and board[row + 1][col] == oppositePiece and self.isSquareDeadly(oppositePiece, (row + 2, col), state):
-            board[row + 1][col] = '.'
+            board[row + 1][col] = 0
         if col > 1 and board[row][col - 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col - 2), state):
-            board[row][col - 1] = '.'
+            board[row][col - 1] = 0
         if col < 9 and board[row][col + 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col + 2), state):
-            board[row][col + 1] = '.'
+            board[row][col + 1] = 0
 
         self.checkForShieldWall(state, move)
 
@@ -296,7 +297,7 @@ class Hnefatafl:
     def getKingRowcol(self, state : State):
         for row in range(len(state.board)):
             for col in range(len(state.board[0])):
-                if state.board[row][col] == 'k':
+                if state.board[row][col] == 3:
                     return row, col
 
     def pieceCount(self, state, player):
@@ -318,21 +319,21 @@ class Hnefatafl:
 
         for row_col in SPECIALSQS - {CENTERSQ}:
             row, col = row_col
-            if 'k' == state.board[row][col]:
+            if state.board[row][col] == 3:
                 return Player.DEFENDER
         
         row, col = self.getKingRowcol(state)
         if row != 0 and row != 10 and col != 0 and col != 10:
             board = state.board
-            if board[row - 1][col] == 'a' and board[row + 1][col] == 'a' and board[row][col - 1] == 'a' and board[row][col + 1] == 'a':
+            if board[row - 1][col] == 1 and board[row + 1][col] == 1 and board[row][col - 1] == 1 and board[row][col + 1] == 1:
                 return Player.ATTACKER
 
 
-        if self.pieceCount(state, 'd') == 0:
+        if self.pieceCount(state, 2) == 0:
             countSqs = 0
             surround = self.getSurroundingSquares(self.getKingRowco(state))
             for sq in surround:
-                if sq == 'a':
+                if sq == 1:
                     countSqs += 1
             if countSqs == len(surround):
                 return Player.ATTACKER

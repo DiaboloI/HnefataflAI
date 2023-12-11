@@ -103,7 +103,7 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         board = state.board
         for row in range(len(board)): # row : String
             for col in range(len(board[0])):
-                if board[row][col] != '.':
+                if board[row][col] != 0:
                     self.draw_piece(state, (row, col))
             
     def draw_piece(self, state:State, row_col): # and sit
@@ -112,11 +112,11 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         piece = board[row][col]
         img : pygame.surface.Surface
         match piece:
-            case 'd':
+            case 2:
                 img = self.img_defender
-            case 'a':
+            case 1:
                 img = self.img_attacker
-            case 'k':
+            case 3:
                 img = self.img_king
         pos = self.calc_piece_pos(row_col, img.get_size())
         self.win.blit(img, pos) # draw piece
