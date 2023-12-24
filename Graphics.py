@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 from Player import Player
-from constant import *
+from Constant import *
 import State
 import time
 

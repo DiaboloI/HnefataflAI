@@ -2,14 +2,15 @@
 from os import access
 from typing import AsyncContextManager
 from Player import Player
-from constant import *
+from Constant import *
 from State import State
+import numpy as np
 
 class Hnefatafl:
 
     def __init__(self, state:State = None):
         if not state:
-            self.state = self.getStartingPosition()
+            self.state = self.get_init_state()
         else:
             self.state = state
         self.currentPiece = ()
@@ -24,20 +25,22 @@ class Hnefatafl:
         self.winner = False
 
 # . = 0, a = 1, d = 2, k = 3
-    def getStartingPosition(self):
-        board = [[0,0,0,1,1,1,1,1,0,0,0],
-                 [0,0,0,0,0,1,0,0,0,0,0],
-                 [0,0,0,0,0,0,0,0,0,0,0],
-                 [1,0,0,0,0,2,0,0,0,0,1],
-                 [1,0,0,0,2,2,2,0,0,0,1],
-                 [1,1,0,2,2,3,2,2,0,1,1],
-                 [1,0,0,0,2,2,2,0,0,0,1],
-                 [1,0,0,0,0,2,0,0,0,0,1],
-                 [0,0,0,0,0,0,0,0,0,0,0],
-                 [0,0,0,0,0,1,0,0,0,0,0],
-                 [0,0,0,1,1,1,1,1,0,0,0]]
+    def get_init_state(self):
+        board = np.array([[0,0,0,1,1,1,1,1,0,0,0],
+                          [0,0,0,0,0,0,0,0,0,0,0],
+                          [1,0,0,0,0,2,0,0,0,0,1],
+                          [0,0,0,0,0,1,0,0,0,0,0],
+                          [1,0,0,0,2,2,2,0,0,0,1],
+                          [1,1,0,2,2,3,2,2,0,1,1],
+                          [1,0,0,0,2,2,2,0,0,0,1],
+                          [1,0,0,0,0,2,0,0,0,0,1],
+                          [0,0,0,0,0,0,0,0,0,0,0],
+                          [0,0,0,0,0,1,0,0,0,0,0],
+                          [0,0,0,1,1,1,1,1,0,0,0]])
 
-        return State(board.copy())
+        state = State(board, player=1, legal_actions=[])
+        state.legal_actions = self.getActions(True, state)
+        return state
    
 
     def getActions (self, isAttackerTurn : bool, state: State):
@@ -125,7 +128,7 @@ class Hnefatafl:
                 self.possibleMoves = self.get_piece_actions(row_col, self.state)
                 self.currentPiece = row_col
             elif row_col in self.possibleMoves:
-                self.state = self.move(self.currentPiece, row_col, self.state)
+                self.state = self.get_next_state((self.currentPiece, row_col), self.state)
                 self.possibleMoves = []
                 moved = True
         return self.possibleMoves.copy(), moved
@@ -133,16 +136,26 @@ class Hnefatafl:
     def captured(self, state : State, square):
         state.board[square[0]][square[1]] = 0
 
-    def move(self, pieceRowcol, destRowcol, state : State):
+    def get_next_state(self, action, state : State):
+        pieceRowcol, destRowcol = action
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
         newState.board[pieceRowcol[0]][pieceRowcol[1]] = 0
         
         self.checkIfCapture(newState, destRowcol)
-        
         self.isDraw = self.repetition(pieceRowcol, destRowcol)
 
+        newState.switch_player()
+        newState.legal_actions = self.getActions(newState.player == 1, newState)
+
         return newState
+    
+    def get_all_next_states (self, state: State) -> tuple:
+        legal_actions = state.legal_actions
+        next_states = []
+        for action in legal_actions:
+            next_states.append(self.get_next_state(action, state))
+        return next_states, legal_actions
     
     def getOppositePiece(self, piece):
         if piece == 1:
@@ -310,7 +323,7 @@ class Hnefatafl:
 
         return count
 
-    def isWon(self, state : State):
+    def is_end_of_game(self, state : State):
         if self.winner:
             return self.winner
 
@@ -331,7 +344,7 @@ class Hnefatafl:
 
         if self.pieceCount(state, 2) == 0:
             countSqs = 0
-            surround = self.getSurroundingSquares(self.getKingRowco(state))
+            surround = self.getSurroundingSquares(self.getKingRowcol(state))
             for sq in surround:
                 if sq == 1:
                     countSqs += 1
@@ -339,3 +352,19 @@ class Hnefatafl:
                 return Player.ATTACKER
 
         return None
+
+    def reward (self, state : State, action = None) -> tuple:
+        if action:
+            next_state = self.get_next_state(action, state)
+        else:
+            next_state = state
+
+        end = self.is_end_of_game(next_state)
+        if (end):
+            if end == Player.Attacker:
+                return 1, True  
+            elif end == Player.Defender:
+                return -1, True  
+            else:
+                return 0, True  
+        return 0, False

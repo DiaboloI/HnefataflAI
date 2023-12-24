@@ -56,7 +56,7 @@ class Ai_Agent:
         return count
 
     def eval(self, state : State):
-        won = self.hnefatafl.isWon(state) # king on squares next to corner also wins
+        won = self.hnefatafl.is_end_of_game(state) # king on squares next to corner also wins
         if won:
             if won == Player.ATTACKER:
                 return math.inf
@@ -76,7 +76,7 @@ class Ai_Agent:
         return score
 
     def alphaBetaPruning(self, state, visited, maximizingPlayer : bool, gotAction, depth, alpha, beta):
-        if depth == DEPTH or self.hnefatafl.isWon(state):
+        if depth == DEPTH or self.hnefatafl.is_end_of_game(state):
             value = self.eval(state)
             return value, gotAction
 

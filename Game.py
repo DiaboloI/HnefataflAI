@@ -43,12 +43,12 @@ def main ():
             if event.type == pygame.QUIT:
                run = False
 
-        action = player.getAction(events, graphics, hnefatafl.state, player == attacker)
+        action = player.get_Action(events, graphics, hnefatafl.state, player == attacker)
         if action:
             if type(player) is Human_Agent:
                 possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)
             else:
-                hnefatafl.state = hnefatafl.move(action[0], action[1], hnefatafl.state)
+                hnefatafl.state = hnefatafl.get_next_state((action[0], action[1]), hnefatafl.state)
                 moved = True
             
 
@@ -57,7 +57,7 @@ def main ():
                     player = defender
                 else:
                     player = attacker
-                won = hnefatafl.isWon(hnefatafl.state)
+                won = hnefatafl.is_end_of_game(hnefatafl.state)
             action = None
 
         
