@@ -1,5 +1,5 @@
 from Random_Agent import Random_Agent
-from Fix_Agent import Fix_Agent
+from DQN_Agent import DQN_Agent
 from Hnefatafl import Hnefatafl
 
 class Tester:
@@ -16,7 +16,7 @@ class Tester:
         player2_win = 0
         games = 0
         while games < games_num:
-            action = player.get_Action(state=env.state, train = False)
+            action = player.get_Action(state=env.state)
             env.move(action, env.state)
             player = self.switchPlayers(player)
             if env.is_end_of_game(env.state):
@@ -41,11 +41,13 @@ class Tester:
 
 if __name__ == '__main__':
     env = Hnefatafl()
-    player1 = Random_Agent(env, player=1)
-    player2 = Fix_Agent(env, player=-1) # TODO: Wrong
+    player1 = Random_Agent(env=env, player=1)
+    player2 = Random_Agent(env=env, player=-1)
+    #player2 = DQN_Agent(env=env, player=-1, train=False, parametes_path="Data/params_15.pth") # TODO: Wrong
     test = Tester(env,player1, player2)
     print(test.test(100))
-    player1 = Fix_Agent(env, player=1) # TODO: Wrong
-    player2 = Random_Agent(env, player=-1)
+    #player1 = DQN_Agent(env=env, player=1, train=False, parametes_path="Data/params_15.pth") # TODO: Wrong
+    player1 = Random_Agent(env=env, player=1)
+    player2 = Random_Agent(env=env, player=-1)
     test = Tester(env,player1, player2)
     print(test.test(100))

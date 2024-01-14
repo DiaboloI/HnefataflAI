@@ -38,9 +38,9 @@ class DQN (nn.Module):
         return copy.deepcopy(self)
 
     def __call__(self, states, actions):
-        print(len(states))
-        print(states)
-        print(len(actions))
-        print(actions)
+        #print(len(states))
+        #print(states)
+        #print(len(actions))
+        #print(actions)
         state_action = torch.cat((states,actions), dim=1)
         return self.forward(state_action)

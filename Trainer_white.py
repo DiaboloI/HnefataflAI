@@ -34,8 +34,8 @@ def main ():
     Q_hat.train = False
     player_hat.DQN = Q_hat
     
-    player2 = Fix_Agent(player=-1, env=env, train=True, random=0)   #0.1
-    # player2 = Random_Agent(player=-1, env=env)   
+    #player2 = Fix_Agent(player=-1, env=env, train=True, random=0)   #0.1
+    player2 = Random_Agent(player=-1, env=env)   
     buffer = ReplayBuffer(path=None) # None
     
     results_file = [] #torch.load(results_path)
@@ -122,7 +122,7 @@ def main ():
             print(test)
             random_results.append(test_score)
 
-        if (epoch+1) % 5000 == 0:
+        if (epoch+1) % 100 == 0:
             torch.save({'epoch': epoch, 'results': results, 'avglosses':avgLosses}, results_path)
             torch.save(buffer, buffer_path)
             player1.save_param(path_Save)

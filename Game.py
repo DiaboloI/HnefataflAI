@@ -3,12 +3,15 @@ from Graphics import Graphics
 from Human_Agent import Human_Agent
 from Ai_Agent import Ai_Agent
 from Random_Agent import Random_Agent
+from DQN_Agent import DQN_Agent
 from Player import Player
-from constant import *
+from Constant import *
 from State import State
 from Hnefatafl import Hnefatafl
 import time
 
+File_Num = 15
+path_Save=f'Data/params_{File_Num}.pth'
 
 def main ():
 
@@ -19,10 +22,11 @@ def main ():
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
     #attacker = Human_Agent(Player.ATTACKER)
-    attacker = Random_Agent(Player.ATTACKER)
+    #attacker = Random_Agent(Player.ATTACKER)
+    attacker = DQN_Agent(Player.ATTACKER, path_Save, False, hnefatafl)
     #attacker = Ai_Agent(Player.ATTACKER)
-    #defender = Human_Agent(Player.DEFENDER)
-    defender = Ai_Agent(Player.DEFENDER)
+    defender = Human_Agent(Player.DEFENDER)
+    #defender = Ai_Agent(Player.DEFENDER)
     #defender = Random_Agent(Player.DEFENDER)
     run = True
     clock = pygame.time.Clock()
@@ -43,12 +47,12 @@ def main ():
             if event.type == pygame.QUIT:
                run = False
 
-        action = player.get_Action(events, graphics, hnefatafl.state, player == attacker)
+        action = player.get_Action(state=hnefatafl.state, events=events, graphics=graphics, attackerTurn=(player == attacker))
         if action:
             if type(player) is Human_Agent:
                 possibleMoves, moved = hnefatafl.handleMouseClick(action, player == attacker)
             else:
-                hnefatafl.state = hnefatafl.get_next_state((action[0], action[1]), hnefatafl.state)
+                hnefatafl.move(action, hnefatafl.state)
                 moved = True
             
 

@@ -3,7 +3,7 @@ import pygame
 import math
 from Player import Player
 from State import State
-from constant import *
+from Constant import *
 from Graphics import *
 from Hnefatafl import Hnefatafl
 

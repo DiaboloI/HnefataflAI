@@ -27,9 +27,9 @@ class Hnefatafl:
 # . = 0, a = 1, d = 2, k = 3
     def get_init_state(self):
         board = np.array([[0,0,0,1,1,1,1,1,0,0,0],
+                          [0,0,0,0,0,1,0,0,0,0,0],
                           [0,0,0,0,0,0,0,0,0,0,0],
                           [1,0,0,0,0,2,0,0,0,0,1],
-                          [0,0,0,0,0,1,0,0,0,0,0],
                           [1,0,0,0,2,2,2,0,0,0,1],
                           [1,1,0,2,2,3,2,2,0,1,1],
                           [1,0,0,0,2,2,2,0,0,0,1],
@@ -56,7 +56,7 @@ class Hnefatafl:
             for col in range(len(state.board[0])):
                 if state.board[row][col] in piecesTurn:
                     for action in self.get_piece_actions((row, col), state):
-                        actions.add(((row, col), action))
+                        actions.add(((row, col) + action))
 
         if len(actions) == 0:
             if isAttackerTurn:
@@ -128,7 +128,7 @@ class Hnefatafl:
                 self.possibleMoves = self.get_piece_actions(row_col, self.state)
                 self.currentPiece = row_col
             elif row_col in self.possibleMoves:
-                self.state = self.get_next_state((self.currentPiece, row_col), self.state)
+                self.state = self.get_next_state((self.currentPiece + row_col), self.state)
                 self.possibleMoves = []
                 moved = True
         return self.possibleMoves.copy(), moved
@@ -136,8 +136,11 @@ class Hnefatafl:
     def captured(self, state : State, square):
         state.board[square[0]][square[1]] = 0
 
+    def unpackAction(self, action):
+        return (action[0], action[1]), (action[2], action[3])
+
     def get_next_state(self, action, state : State):
-        pieceRowcol, destRowcol = action
+        pieceRowcol, destRowcol = self.unpackAction(action)
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
         newState.board[pieceRowcol[0]][pieceRowcol[1]] = 0
@@ -150,6 +153,9 @@ class Hnefatafl:
 
         return newState
     
+    def move(self, action, state):
+        self.state = self.get_next_state(action, self.state)
+
     def get_all_next_states (self, state: State) -> tuple:
         legal_actions = state.legal_actions
         next_states = []
@@ -361,9 +367,9 @@ class Hnefatafl:
 
         end = self.is_end_of_game(next_state)
         if (end):
-            if end == Player.Attacker:
+            if end == Player.ATTACKER:
                 return 1, True  
-            elif end == Player.Defender:
+            elif end == Player.DEFENDER:
                 return -1, True  
             else:
                 return 0, True  
