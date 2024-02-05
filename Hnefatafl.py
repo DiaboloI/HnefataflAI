@@ -20,6 +20,10 @@ class Hnefatafl:
         self.repetitionPattern = []
         self.currentPattern = []
 
+        self.kingPos = (5, 5)
+
+        self.moveCount = 0
+
         self.isDraw = False
 
         self.winner = False
@@ -154,6 +158,10 @@ class Hnefatafl:
         return newState
     
     def move(self, action, state):
+        self.moveCount += 1
+        pieceRowcol, destRowcol = self.unpackAction(action)
+        if (self.state.board[destRowcol[0], destRowcol[1]]):
+            self.kingPos = destRowcol
         self.state = self.get_next_state(action, self.state)
 
     def get_all_next_states (self, state: State) -> tuple:
@@ -309,15 +317,12 @@ class Hnefatafl:
         if col < 9 and board[row][col + 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col + 2), state):
             board[row][col + 1] = 0
 
-        self.checkForShieldWall(state, move)
+        #self.checkForShieldWall(state, move)
 
 
 
     def getKingRowcol(self, state : State):
-        for row in range(len(state.board)):
-            for col in range(len(state.board[0])):
-                if state.board[row][col] == 3:
-                    return row, col
+        return self.kingPos
 
     def pieceCount(self, state, player):
         count = 0
@@ -333,8 +338,13 @@ class Hnefatafl:
         if self.winner:
             return self.winner
 
+
+
         if self.isDraw:
-            return "repetition"
+            return Player.ATTACKER
+        
+        if self.moveCount > 100:
+            return "draw"
 
         for row_col in SPECIALSQS - {CENTERSQ}:
             row, col = row_col
@@ -349,17 +359,16 @@ class Hnefatafl:
 
 
         if self.pieceCount(state, 2) == 0:
-            countSqs = 0
             surround = self.getSurroundingSquares(self.getKingRowcol(state))
             for sq in surround:
-                if sq == 1:
-                    countSqs += 1
-            if countSqs == len(surround):
-                return Player.ATTACKER
+                if not sq == 1:
+                    return None
+            return Player.ATTACKER
 
         return None
 
     def reward (self, state : State, action = None) -> tuple:
+        next_state = state
         if action:
             next_state = self.get_next_state(action, state)
         else:

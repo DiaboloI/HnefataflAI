@@ -7,7 +7,12 @@ from Fix_Agent import Fix_Agent
 import torch
 from Tester import Tester
 
-epochs = 2000000
+from cProfile import Profile
+from pstats import SortKey, Stats
+
+
+
+epochs = 100
 start_epoch = 0
 C = 350
 learning_rate = 0.01
@@ -136,6 +141,11 @@ def main ():
     torch.save(random_results, random_results_path)
 
 if __name__ == '__main__':
-    main()
-
-
+    with Profile() as profile:
+        print(f"{main() = }")
+        (
+            Stats(profile)
+            .strip_dirs()
+            .sort_stats(SortKey.TIME)
+            .print_stats()
+        )
