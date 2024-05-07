@@ -13,6 +13,8 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         # self.board = state.board
         # self.rows, self.cols = self.board.shape
         self.win = win 
+        self.moveCount = 1
+        self.onGame = False
         self.loadImages()
     
     def loadImages(self):
@@ -123,10 +125,12 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
     
     def drawTurnCaption(self, attackerTurn):
         row_col = (12, 5)
+        if (not self.onGame):
+            self.moveCount += 1
         if attackerTurn:
-            self.drawCaption("Attacker's Turn!", row_col)
+            self.drawCaption("Attacker's Turn! " + str(self.moveCount), row_col)
         else:
-            self.drawCaption("Defender's Turn!", row_col)
+            self.drawCaption("Defender's Turn! " + str(self.moveCount), row_col)
 
     def drawCaption(self, caption, row_col): 
         font = pygame.font.SysFont('ariel', (SQUARE_SIZE - (MARGIN*2)))
@@ -136,10 +140,12 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
 
     def drawWinningMessage(self, winner):
         winn = ""
-        if type(winner) is Player.ATTACKER:
+        if winner == Player.ATTACKER:
             winn = "Attacker"
         else:
             winn = "Defender"
+
+        self.moveCount = 1
 
         font = pygame.font.SysFont('ariel', HEIGHT // 7)
         text = font.render(winn + " won!", 1, RED)

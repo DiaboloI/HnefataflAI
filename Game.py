@@ -3,15 +3,15 @@ from Graphics import Graphics
 from Human_Agent import Human_Agent
 from Ai_Agent import Ai_Agent
 from Random_Agent import Random_Agent
-from DQN_Agent import DQN_Agent
+from DQN_Agent_Deep import DQN_Agent
 from Player import Player
 from Constant import *
 from State import State
 from Hnefatafl import Hnefatafl
 import time
 
-File_Num = 15
-path_Save=f'Data/params_{File_Num}.pth'
+File_Num = 20
+path_Save=f'Data/best_params_{File_Num}.pth'
 
 def main ():
 
@@ -21,13 +21,14 @@ def main ():
     
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
-    #attacker = Human_Agent(Player.ATTACKER)
-    #attacker = Random_Agent(Player.ATTACKER)
-    attacker = DQN_Agent(Player.ATTACKER, path_Save, False, hnefatafl)
+    graphics.onGame = True
+    attacker = Human_Agent(Player.ATTACKER)
+    #attacker = Random_Agent(Player.ATTACKER, hnefatafl)
+    #attacker = DQN_Agent(Player.ATTACKER, path_Save, False, hnefatafl)
     #attacker = Ai_Agent(Player.ATTACKER)
     defender = Human_Agent(Player.DEFENDER)
     #defender = Ai_Agent(Player.DEFENDER)
-    #defender = Random_Agent(Player.DEFENDER)
+    #defender = Random_Agent(Player.DEFENDER, hnefatafl)
     run = True
     clock = pygame.time.Clock()
     graphics.draw(hnefatafl.state, [], True)
@@ -55,8 +56,9 @@ def main ():
                 hnefatafl.move(action, hnefatafl.state)
                 moved = True
             
-
+            time.sleep(0.5)
             if moved: # change turn.
+                graphics.moveCount += 1
                 if player == attacker:
                     player = defender
                 else:

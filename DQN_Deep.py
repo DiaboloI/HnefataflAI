@@ -4,10 +4,11 @@ import torch.nn.functional as F
 import copy
 
 # Parameters
-input_size = 125 # state: board = 11 * 11 = 121 + action (4) 
+input_size = 125 # state: board = 8 * 8 = 64 + action (2)
 layer1 = 128
+layer2 = 128
 output_size = 1 # Q(state, action)
-gamma = 0.99 
+gamma = 0.99
 
 
 class DQN (nn.Module):
@@ -15,19 +16,22 @@ class DQN (nn.Module):
         super().__init__()
         self.device = device
         self.linear1 = nn.Linear(input_size, layer1)
-        self.output = nn.Linear(layer1, output_size)
+        self.linear2 = nn.Linear(layer1, layer2)
+        self.output = nn.Linear(layer2, output_size)
         self.MSELoss = nn.MSELoss()
 
     def forward (self, x):
         x = self.linear1(x)
         x = F.leaky_relu(x)
+        x = self.linear2(x)
+        x = F.leaky_relu(x)
         x = self.output(x)
         return x
-    
+
     def loss (self, Q_value, rewards, Q_next_Values, Dones ):
         Q_new = rewards + gamma * Q_next_Values * (1- Dones)
         return self.MSELoss(Q_value, Q_new)
-    
+
     def load_params(self, path):
         self.load_state_dict(torch.load(path))
 
@@ -38,9 +42,5 @@ class DQN (nn.Module):
         return copy.deepcopy(self)
 
     def __call__(self, states, actions):
-        #print(len(states))
-        #print(states)
-        #print(len(actions))
-        #print(actions)
         state_action = torch.cat((states,actions), dim=1)
         return self.forward(state_action)

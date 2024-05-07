@@ -20,13 +20,16 @@ class Hnefatafl:
         self.repetitionPattern = []
         self.currentPattern = []
 
-        self.kingPos = (5, 5)
-
         self.moveCount = 0
 
         self.isDraw = False
 
-        self.winner = False
+        self.kingPos = (5, 5)
+
+        self.extraTreat = 0
+
+        self.whiteCaptures = 0
+        self.blackCaptures = 0
 
 # . = 0, a = 1, d = 2, k = 3
     def get_init_state(self):
@@ -62,11 +65,12 @@ class Hnefatafl:
                     for action in self.get_piece_actions((row, col), state):
                         actions.add(((row, col) + action))
 
-        if len(actions) == 0:
-            if isAttackerTurn:
-                self.winner = Player.ATTACKER
-            else:
-                self.winner = Player.DEFENDER
+        if (len(actions) == 0):
+            with open("program.log", "a") as myfile:
+                myfile.write(str(state.board) + "\n\n" + str(isAttackerTurn) + "\n\n\n")
+
+
+
         return actions
 
 
@@ -145,6 +149,11 @@ class Hnefatafl:
 
     def get_next_state(self, action, state : State):
         pieceRowcol, destRowcol = self.unpackAction(action)
+
+        if (state.board[pieceRowcol[0], pieceRowcol[1]] == '3'):
+            self.kingPos = destRowcol
+        self.moveCount += 1
+
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
         newState.board[pieceRowcol[0]][pieceRowcol[1]] = 0
@@ -158,10 +167,6 @@ class Hnefatafl:
         return newState
     
     def move(self, action, state):
-        self.moveCount += 1
-        pieceRowcol, destRowcol = self.unpackAction(action)
-        if (self.state.board[destRowcol[0], destRowcol[1]]):
-            self.kingPos = destRowcol
         self.state = self.get_next_state(action, self.state)
 
     def get_all_next_states (self, state: State) -> tuple:
@@ -307,16 +312,26 @@ class Hnefatafl:
         thisPiece = board[row][col]
         
         oppositePiece = self.getOppositePiece(thisPiece)[0] # king is not relevant here.
-
+        trr = 0
         if row > 1 and board[row - 1][col] == oppositePiece and self.isSquareDeadly(oppositePiece, (row - 2, col), state):
             board[row - 1][col] = 0
+            trr += 1
         if row < 9 and board[row + 1][col] == oppositePiece and self.isSquareDeadly(oppositePiece, (row + 2, col), state):
             board[row + 1][col] = 0
+            trr += 1
         if col > 1 and board[row][col - 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col - 2), state):
             board[row][col - 1] = 0
+            trr += 1
         if col < 9 and board[row][col + 1] == oppositePiece and self.isSquareDeadly(oppositePiece, (row, col + 2), state):
             board[row][col + 1] = 0
+            trr += 1
 
+        if (oppositePiece == 1):
+            self.blackCaptures += trr
+            self.extraTreat -= trr
+        else:
+            self.whiteCaptures += trr
+            self.extraTreat += trr
         #self.checkForShieldWall(state, move)
 
 
@@ -334,36 +349,93 @@ class Hnefatafl:
 
         return count
 
+    def clean(self):
+        self.currentPiece = ()
+        self.possibleMoves = []
+
+        self.repetitionCount = 0
+        self.repetitionPattern = []
+        self.currentPattern = []
+
+        self.moveCount = 0
+
+        self.isDraw = False
+
+        self.kingPos = (5, 5)
+
+        self.state = self.get_init_state()
+
+        self.extraTreat = 0
+
+        self.whiteCaptures = 0
+        self.blackCaptures = 0
+
     def is_end_of_game(self, state : State):
-        if self.winner:
-            return self.winner
-
-
-
         if self.isDraw:
-            return Player.ATTACKER
+            self.clean()
+            return Player.DEFENDER
         
+
         if self.moveCount > 100:
-            return "draw"
+            #return "draw"
+            if self.whiteCaptures < self.blackCaptures:
+                self.clean()
+                return Player.DEFENDER
+            elif self.whiteCaptures > self.blackCaptures:
+                self.clean()
+                return Player.ATTACKER
+            else:
+                self.clean()
+                return "draw"
 
         for row_col in SPECIALSQS - {CENTERSQ}:
             row, col = row_col
             if state.board[row][col] == 3:
+                self.clean()
                 return Player.DEFENDER
         
         row, col = self.getKingRowcol(state)
         if row != 0 and row != 10 and col != 0 and col != 10:
             board = state.board
             if board[row - 1][col] == 1 and board[row + 1][col] == 1 and board[row][col - 1] == 1 and board[row][col + 1] == 1:
+                self.clean()
                 return Player.ATTACKER
 
 
+        if self.pieceCount(state, 1) == 0:
+            self.clean()
+            return Player.DEFENDER
         if self.pieceCount(state, 2) == 0:
             surround = self.getSurroundingSquares(self.getKingRowcol(state))
             for sq in surround:
                 if not sq == 1:
                     return None
+            self.clean()
             return Player.ATTACKER
+
+        if (state.player == -1):
+            actions = set([])
+            piecesTurn = [2, 3]
+
+            for row in range(len(state.board)):
+                for col in range(len(state.board[0])):
+                    if state.board[row][col] in piecesTurn:
+                        for action in self.get_piece_actions((row, col), state):
+                            return None
+            self.clean()
+            return Player.ATTACKER
+
+        if (state.player == 1):
+            actions = set([])
+            piecesTurn = [1]
+
+            for row in range(len(state.board)):
+                for col in range(len(state.board[0])):
+                    if state.board[row][col] in piecesTurn:
+                        for action in self.get_piece_actions((row, col), state):
+                            return None
+            self.clean()
+            return Player.DEFENDER
 
         return None
 
@@ -374,12 +446,15 @@ class Hnefatafl:
         else:
             next_state = state
 
+        extra = self.extraTreat
         end = self.is_end_of_game(next_state)
         if (end):
             if end == Player.ATTACKER:
-                return 1, True  
+                return 30 + extra, True
             elif end == Player.DEFENDER:
-                return -1, True  
-            else:
-                return 0, True  
-        return 0, False
+                return -30 + extra, True
+            elif end == "draw":
+                return extra, True
+
+
+        return extra, False

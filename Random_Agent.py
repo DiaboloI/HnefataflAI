@@ -9,9 +9,10 @@ class Random_Agent:
         self.player = player
         self.hnefatafl = Hnefatafl()
 
-    def get_Action(self, event = None, graphics = None, state : State = None, attackerTurn : bool = False):
-        actions = self.hnefatafl.getActions(attackerTurn, state)
-
+    def get_Action(self, events = None, graphics = None, state : State = None, train = False):
+        actions = self.hnefatafl.getActions(self.player == 1, state)
+        if (len(actions) == 1):
+            return list(actions)[0]
         randomMove = random.randint(0, len(actions) - 1)
         return list(actions)[randomMove]
 
