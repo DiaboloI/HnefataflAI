@@ -64,6 +64,24 @@ class State:
         self.player = player
         self.legal_actions = legal_actions
 
+        self.currentPiece = ()
+        self.possibleMoves = []
+
+        self.repetitionCount = 0
+        self.repetitionPattern = []
+        self.currentPattern = []
+
+        self.moveCount = 0
+
+        self.isDraw = False
+
+        self.kingPos = (5, 5)
+
+        self.extraTreat = 0
+
+        self.whiteCaptures = 0
+        self.blackCaptures = 0
+
 
     def get_opponent (self):
         return -self.player
@@ -82,7 +100,28 @@ class State:
         newBoard = np.copy(self.board)
         # newBoard = deepcopy(self.board)
         legal_actions = self.legal_actions.copy()
-        return State(board=newBoard, player=self.player, legal_actions=legal_actions)
+
+        state = State(board=newBoard, player=self.player, legal_actions=legal_actions)
+
+        state.currentPiece = self.currentPiece
+        state.possibleMoves = self.possibleMoves.copy()
+
+        state.repetitionCount = self.repetitionCount
+        state.repetitionPattern = self.repetitionPattern.copy()
+        state.currentPattern = self.currentPattern.copy()
+
+        state.moveCount = self.moveCount
+
+        state.isDraw = self.isDraw
+
+        state.kingPos = self.kingPos
+
+        state.extraTreat = self.extraTreat
+
+        state.whiteCaptures = self.whiteCaptures
+        state.blackCaptures = self.blackCaptures
+
+        return state
 
     def toTensor (self, device = torch.device('cpu')) -> tuple:
         #print(self.board)

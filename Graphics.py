@@ -43,10 +43,10 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         img = pygame.transform.scale(img, size)
         return img
 
-    def drawAllSquares(self, state:State):
+    def drawAllSquares(self):
         # draw all the squares. corner and center squares appear uniquely. starting squares also appear differently.
-        for row in range(len(state.board)):
-            for col in range(len(state.board[0])):
+        for row in range(11):
+            for col in range(11):
                 row_col = (row, col)
                 if row_col == CENTERSQ:
                     self.win.blit(self.img_square_king, np.add(self.calc_base_pos(row_col), (MARGIN, MARGIN)))

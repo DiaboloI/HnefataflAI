@@ -10,15 +10,15 @@ from Tester import Tester
 import requests
 
 epochs = 2000000
-start_epoch = 0
+start_epoch = 138000
 C = 4
 learning_rate = 0.001
 batch_size = 64
 env = Hnefatafl()
 MIN_Buffer = 4000
 
-File_Num = 93
-path_load= f'Data/best_params_91.pth'
+File_Num = 95
+path_load= f'Data/best_random_params_93.pth'
 path_Save=f'Data/params_{File_Num}.pth'
 path_best = f'Data/best_params_{File_Num}.pth'
 buffer_path = f'Data/buffer_{File_Num}.pth'
@@ -29,7 +29,7 @@ path_best_random = f'Data/best_random_params_{File_Num}.pth'
 
 def main ():
 
-    player1 = DQN_Agent(player=1, env=env,parametes_path=path_load)
+    player1 = DQN_Agent(player=1, env=env,parametes_path=path_best_random)
     player_hat = DQN_Agent(player=1, env=env, train=False)
     Q = player1.DQN
     Q_hat = Q.copy()
@@ -38,19 +38,19 @@ def main ():
 
     #player2 = Fix_Agent(player=-1, env=env, train=True, random=0)   #0.1
     player2 = Random_Agent(player=-1, env=env)
-    buffer = ReplayBuffer(path='') # None
+    buffer = ReplayBuffer(path=buffer_path) # None
 
-    results_file = [] #torch.load(results_path)
-    results = [] #results_file['results'] # []
-    avgLosses = [] #results_file['avglosses']     #[]
-    avgLoss = 0 #avgLosses[-1] #0
+    results_file = torch.load(results_path)
+    results = results_file['results'] # []
+    avgLosses = results_file['avglosses']     #[]
+    avgLoss = avgLosses[-1] #0
     loss = torch.Tensor([0])
-    res = 0
+    res = -200
     best_res = 0
     loss_count = 0
     tester = Tester(player1=player1, player2=Random_Agent(player=-1, env=env), env=env)
     #tester_fix = Tester(player1=player1, player2=player2, env=env)
-    random_results = [] #torch.load(random_results_path)   # []
+    random_results = torch.load(random_results_path)   # []
     best_random = 0 #max(random_results)
 
 
@@ -61,6 +61,7 @@ def main ():
     for epoch in range(start_epoch, epochs):
         print(f'epoch = {epoch}', end='\r')
         state_1 = env.get_init_state()
+
         end_of_game_2 = False
         while not end_of_game_2:
             # Sample Environement
@@ -125,17 +126,19 @@ def main ():
                 player1.save_param(path_best_random)
             print(test)
             try:
-                r = requests.post("https://ntfy.sh/djruycgwjetest", data=f'In epoch {epoch+1}, test results: {test}, averageloss: {avgLoss}, best res: {best_res}'.encode(encoding='utf-8'))
+                r = requests.post("https://ntfy.sh/djruycgwjetest", data=f'In epoch {epoch+1}, test results: {test}, averageloss: {avgLoss}, best_random: {best_random},  best res: {best_res}'.encode(encoding='utf-8'))
                 r.raise_for_status()
             except requests.exceptions.RequestException as errex:
                 print("Exception request")
             random_results.append(test_score)
 
-        if (epoch+1) % 5000 == 0:
+        if (epoch+1) % 1000 == 0:
             torch.save({'epoch': epoch, 'results': results, 'avglosses':avgLosses}, results_path)
-            torch.save(buffer, buffer_path)
             player1.save_param(path_Save)
             torch.save(random_results, random_results_path)
+
+        if (epoch+1) % 5000 == 0:
+            torch.save(buffer, buffer_path)
         if len(buffer) > MIN_Buffer:
             print (f'epoch={epoch} loss={loss:.5f} Q_values[0]={Q_values[0].item():.3f} avgloss={avgLoss:.5f}', end=" ")
             print (f'learning rate={scheduler.get_last_lr()[0]} path={path_Save} res= {res} best_res = {best_res}')

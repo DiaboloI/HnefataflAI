@@ -13,23 +13,10 @@ class Hnefatafl:
             self.state = self.get_init_state()
         else:
             self.state = state
-        self.currentPiece = ()
-        self.possibleMoves = []
 
-        self.repetitionCount = 0
-        self.repetitionPattern = []
-        self.currentPattern = []
 
-        self.moveCount = 0
-
-        self.isDraw = False
-
-        self.kingPos = (5, 5)
-
-        self.extraTreat = 0
-
-        self.whiteCaptures = 0
-        self.blackCaptures = 0
+        self.sWcaptures = 0
+        self.sBcaptures = 0
 
 # . = 0, a = 1, d = 2, k = 3
     def get_init_state(self):
@@ -47,6 +34,7 @@ class Hnefatafl:
 
         state = State(board, player=1, legal_actions=[])
         state.legal_actions = self.getActions(True, state)
+        #print(state.moveCount)
         return state
    
 
@@ -133,13 +121,13 @@ class Hnefatafl:
         moved = False
         if not self.isOutofRange(row_col):
             if self.isAPiece(row_col) and self.isPieceTurn(row_col, attackerTurn):
-                self.possibleMoves = self.get_piece_actions(row_col, self.state)
-                self.currentPiece = row_col
-            elif row_col in self.possibleMoves:
-                self.state = self.get_next_state((self.currentPiece + row_col), self.state)
-                self.possibleMoves = []
+                state.possibleMoves = self.get_piece_actions(row_col, self.state)
+                state.currentPiece = row_col
+            elif row_col in state.possibleMoves:
+                self.state = self.get_next_state((state.currentPiece + row_col), self.state)
+                state.possibleMoves = []
                 moved = True
-        return self.possibleMoves.copy(), moved
+        return state.possibleMoves.copy(), moved
 
     def captured(self, state : State, square):
         state.board[square[0]][square[1]] = 0
@@ -150,17 +138,17 @@ class Hnefatafl:
     def get_next_state(self, action, state : State):
         pieceRowcol, destRowcol = self.unpackAction(action)
 
-        if (state.board[pieceRowcol[0], pieceRowcol[1]] == '3'):
-            self.kingPos = destRowcol
-        self.moveCount += 1
-
         newState = state.copy()
         newState.board[destRowcol[0]][destRowcol[1]] = newState.board[pieceRowcol[0]][pieceRowcol[1]]
         newState.board[pieceRowcol[0]][pieceRowcol[1]] = 0
+
+        if (state.board[destRowcol[0], destRowcol[1]] == 3):
+            newState.kingPos = destRowcol
         
         self.checkIfCapture(newState, destRowcol)
-        self.isDraw = self.repetition(pieceRowcol, destRowcol)
+        state.isDraw = self.repetition(state, pieceRowcol, destRowcol)
 
+        newState.moveCount += 1
         newState.switch_player()
         newState.legal_actions = self.getActions(newState.player == 1, newState)
 
@@ -202,16 +190,16 @@ class Hnefatafl:
         surSquares = []
 
         if row > 0:
-            surSquares.append((row - 1, col))
+            surSquares.append(tuple((row - 1, col)))
 
         if row < 10:
-            surSquares.append((row + 1, col))
+            surSquares.append(tuple((row + 1, col)))
 
         if col > 0:
-            surSquares.append((row, col - 1))
+            surSquares.append(tuple((row, col - 1)))
 
         if col < 10:
-            surSquares.append((row, col + 1))
+            surSquares.append(tuple((row, col + 1)))
         
         return surSquares
 
@@ -282,22 +270,22 @@ class Hnefatafl:
         
 
 
-    def repetition(self, moveSrc : tuple, moveDst : tuple):
+    def repetition(self, state: State, moveSrc : tuple, moveDst : tuple):
         isDraw = False
         
-        self.currentPattern.append((moveSrc, moveDst))
+        state.currentPattern.append((moveSrc, moveDst))
 
-        if len(self.currentPattern) == 4:
-            if self.currentPattern == self.repetitionPattern:
-                self.repetitionCount += 1
-                if self.repetitionCount == MAXREPETITION:
+        if len(state.currentPattern) == 4:
+            if state.currentPattern == state.repetitionPattern:
+                state.repetitionCount += 1
+                if state.repetitionCount == MAXREPETITION:
                     isDraw = True
             else:
-                self.repetitionCount = 0
-                self.repetitionPattern = self.currentPattern.copy()
+                state.repetitionCount = 0
+                state.repetitionPattern = state.currentPattern.copy()
 
 
-            self.currentPattern = []
+            state.currentPattern = []
         
         
         return isDraw
@@ -327,17 +315,17 @@ class Hnefatafl:
             trr += 1
 
         if (oppositePiece == 1):
-            self.blackCaptures += trr
-            self.extraTreat -= trr
+            state.blackCaptures += trr
+            state.extraTreat -= trr
         else:
-            self.whiteCaptures += trr
-            self.extraTreat += trr
+            state.whiteCaptures += trr
+            state.extraTreat += trr
         #self.checkForShieldWall(state, move)
 
 
 
     def getKingRowcol(self, state : State):
-        return self.kingPos
+        return state.kingPos
 
     def pieceCount(self, state, player):
         count = 0
@@ -349,106 +337,72 @@ class Hnefatafl:
 
         return count
 
-    def clean(self):
-        self.currentPiece = ()
-        self.possibleMoves = []
-
-        self.repetitionCount = 0
-        self.repetitionPattern = []
-        self.currentPattern = []
-
-        self.moveCount = 0
-
-        self.isDraw = False
-
-        self.kingPos = (5, 5)
-
-        self.state = self.get_init_state()
-
-        self.extraTreat = 0
-
-        self.whiteCaptures = 0
-        self.blackCaptures = 0
-
     def is_end_of_game(self, state : State):
-        if self.isDraw:
-            self.clean()
-            return Player.DEFENDER
+        if state.isDraw:
+            return "draw"
         
-
-        if self.moveCount > 100:
+        if state.moveCount > 100:
             #return "draw"
-            if self.whiteCaptures < self.blackCaptures:
-                self.clean()
+            if state.whiteCaptures < state.blackCaptures:
                 return Player.DEFENDER
-            elif self.whiteCaptures > self.blackCaptures:
-                self.clean()
+            elif state.whiteCaptures > state.blackCaptures:
                 return Player.ATTACKER
             else:
-                self.clean()
                 return "draw"
 
         for row_col in SPECIALSQS - {CENTERSQ}:
             row, col = row_col
             if state.board[row][col] == 3:
-                self.clean()
+                state.extraTreat -= 100
+                self.sBcaptures += 1
                 return Player.DEFENDER
         
         row, col = self.getKingRowcol(state)
         if row != 0 and row != 10 and col != 0 and col != 10:
             board = state.board
             if board[row - 1][col] == 1 and board[row + 1][col] == 1 and board[row][col - 1] == 1 and board[row][col + 1] == 1:
-                self.clean()
+                state.extraTreat += 100
+                self.sWcaptures += 1
                 return Player.ATTACKER
 
 
         if self.pieceCount(state, 1) == 0:
-            self.clean()
+            state.extraTreat -= 50
             return Player.DEFENDER
         if self.pieceCount(state, 2) == 0:
             surround = self.getSurroundingSquares(self.getKingRowcol(state))
             for sq in surround:
-                if not sq == 1:
+                if state.board[sq[0]][sq[1]] == 0:
                     return None
-            self.clean()
+
+            state.extraTreat += 50
             return Player.ATTACKER
+
 
         if (state.player == -1):
-            actions = set([])
-            piecesTurn = [2, 3]
-
-            for row in range(len(state.board)):
-                for col in range(len(state.board[0])):
-                    if state.board[row][col] in piecesTurn:
-                        for action in self.get_piece_actions((row, col), state):
-                            return None
-            self.clean()
-            return Player.ATTACKER
+            if (len(state.legal_actions) == 0):
+                state.extraTreat += 50
+                return Player.ATTACKER
 
         if (state.player == 1):
-            actions = set([])
-            piecesTurn = [1]
-
-            for row in range(len(state.board)):
-                for col in range(len(state.board[0])):
-                    if state.board[row][col] in piecesTurn:
-                        for action in self.get_piece_actions((row, col), state):
-                            return None
-            self.clean()
-            return Player.DEFENDER
+            if (len(state.legal_actions) == 0):
+                state.extraTreat -= 50
+                return Player.DEFENDER
 
         return None
 
-    def reward (self, state : State, action = None) -> tuple:
+    def reward (self, state : State) -> tuple:
         next_state = state
-        if action:
-            next_state = self.get_next_state(action, state)
-        else:
-            next_state = state
+        # if action:
+        #     next_state = self.get_next_state(action, state)
+        # else:
+        #     next_state = state
 
-        extra = self.extraTreat
         end = self.is_end_of_game(next_state)
+
         if (end):
+            extra = state.extraTreat
+            state.extraTreat = 0
             if end == Player.ATTACKER:
                 return 30 + extra, True
             elif end == Player.DEFENDER:
@@ -456,5 +410,4 @@ class Hnefatafl:
             elif end == "draw":
                 return extra, True
 
-
-        return extra, False
+        return state.extraTreat, False

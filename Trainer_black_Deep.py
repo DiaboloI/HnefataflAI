@@ -9,15 +9,15 @@ from Tester import Tester
 import requests
 
 epochs = 2000000
-start_epoch = 79000
+start_epoch = 184000
 C = 4
 learning_rate = 0.001
 batch_size = 64
 env = Hnefatafl()
 MIN_Buffer = 4000
 
-File_Num = 71
-path_load= f'Data/params_{File_Num}.pth'
+File_Num = 75
+path_load= f'Data/best_params_71.pth'
 path_Save=f'Data/params_{File_Num}.pth'
 path_best = f'Data/best_params_{File_Num}.pth'
 buffer_path = f'Data/buffer_{File_Num}.pth'
@@ -28,7 +28,7 @@ path_best_random = f'Data/best_random_params_{File_Num}.pth'
 
 def main ():
     
-    player1 = DQN_Agent(player=-1, env=env,parametes_path=path_best_random)
+    player1 = DQN_Agent(player=-1, env=env,parametes_path=path_Save)
     player_hat = DQN_Agent(player=-1, env=env, train=False)
     Q = player1.DQN
     Q_hat = Q.copy()
@@ -39,10 +39,10 @@ def main ():
     player2 = Random_Agent(player=1, env=env)
     buffer = ReplayBuffer(path='')
 
-    results_file = []
-    results = []
-    avgLosses = []
-    avgLoss = 0
+    results_file = torch.load(results_path)
+    results = results_file['results']
+    avgLosses = results_file['avglosses']     #[]
+    avgLoss = avgLosses[-1] #0
     loss = torch.Tensor([0])
     res = 0
     best_res = 200
@@ -126,23 +126,25 @@ def main ():
 
         if (epoch+1) % 1000 == 0:
             test = tester(100)
-            test_score = test[0]-test[1]
-            if best_random > test_score:
+            test_score = test[1]
+            if best_random < test_score:
                 best_random = test_score
                 player1.save_param(path_best_random)
             print(test)
             try: 
-                r = requests.post("https://ntfy.sh/dqnhnefatafltraining2", data=f'In epoch {epoch+1}, test results: {test}, averageloss: {avgLoss}'.encode(encoding='utf-8'))
+                r = requests.post("https://ntfy.sh/dqnhnefatafltraining2", data=f'In epoch {epoch+1}, test results: {test}, averageloss: {avgLoss}, best_random: {best_random},, best res: {best_res}'.encode(encoding='utf-8'))
                 r.raise_for_status() 
             except requests.exceptions.RequestException as errex: 
                 print("Exception request") 
             random_results.append(test_score)
 
-        if (epoch+1) % 5000 == 0:
+        if (epoch+1) % 1000 == 0:
             torch.save({'epoch': epoch, 'results': results, 'avglosses':avgLosses}, results_path)
-            torch.save(buffer, buffer_path)
             player1.save_param(path_Save)
             torch.save(random_results, random_results_path)
+
+        if (epoch+1) % 5000 == 0:
+            torch.save(buffer, buffer_path)
 
         if len(buffer) > MIN_Buffer:
             print (f'epoch={epoch} loss={loss:.5f} Q_values[0]={Q_values[0].item():.3f} avgloss={avgLoss:.5f}', end=" ")

@@ -12,8 +12,15 @@ class Ai_Agent:
         self.player = player
         self.hnefatafl = Hnefatafl()
     
-    def pathToWin(self, state): # check if it is a forced win.
-        pass
+    def nextToKing(self, state):
+        kingRowcol = self.hnefatafl.getKingRowcol(state)
+        surrounding = self.hnefatafl.getSurroundingSquares(kingRowcol)
+
+        count = 0
+        for square in surrounding:
+            if state.board[square[0]][square[1]] == 1:
+                count += 1
+        return count
 
     def countAttackersWhoBlockCorners(self, state):
         count = 0
@@ -69,13 +76,15 @@ class Ai_Agent:
                 return -100000
         edgeScore = 0
         if self.hnefatafl.inEdges(kingRowcol, 1):
-            edgeScore = 10
+            edgeScore = 20
 
-        score = 3 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state) + self.countAttackersWhoBlockCorners(state) * 3  - edgeScore * 2
+        score = 3 * self.nextToKing(state) + 3 * self.pieceCountDifference(state) + self.calculateKingManhattanDistance(state) + 3 * self.countAttackersWhoBlockCorners(state)  - edgeScore
 
         return score
 
-    def alphaBetaPruning(self, state, visited, maximizingPlayer : bool, gotAction, depth, alpha, beta):
+    def alphaBetaPruning(self, state, maximizingPlayer : bool, gotAction, depth, alpha, beta):
+        srt = 0
+
         if depth == DEPTH or self.hnefatafl.is_end_of_game(state):
             value = self.eval(state)
             return value, gotAction
@@ -84,11 +93,11 @@ class Ai_Agent:
             bestValue = -math.inf
             bestAction = gotAction
             for action in self.hnefatafl.getActions(True, state):
-                newState = self.hnefatafl.move(action[0], action[1], state)
-                if newState in visited:
-                    continue
-                visited.append(newState)
-                newValue, newAction = self.alphaBetaPruning(newState, visited, False, action, depth + 1, alpha, beta)
+                newState = self.hnefatafl.get_next_state(action, state)
+                newValue, newAction = self.alphaBetaPruning(newState, False, action, depth + 1, alpha, beta)
+
+                if (bestAction == None):
+                    bestAction = newAction
 
                 if newValue > bestValue:
                     bestValue = newValue
@@ -98,7 +107,7 @@ class Ai_Agent:
                     alpha = bestValue
 
 
-                if alpha <= beta:
+                if beta <= alpha:
                     break
 
             return bestValue, bestAction
@@ -107,19 +116,21 @@ class Ai_Agent:
             bestValue = math.inf
             bestAction = gotAction
             for action in self.hnefatafl.getActions(False, state):
-                newState = self.hnefatafl.move(action[0], action[1], state)
-                if newState in visited:
-                    continue
-                visited.append(newState)
-                newValue, newAction = self.alphaBetaPruning(newState, visited, True, action, depth + 1, alpha, beta)
+                newState = self.hnefatafl.get_next_state(action, state)
+                newValue, newAction = self.alphaBetaPruning(newState, True, action, depth + 1, alpha, beta)
+
+                if (bestAction == None):
+                    bestAction = newAction
+
                 if newValue < bestValue:
                     bestValue = newValue
                     bestAction = action
+                    srt = newState
 
                 if bestValue < beta:
                     beta = bestValue
 
-                if alpha >= beta:
+                if beta <= alpha:
                     break
 
             return bestValue, bestAction
@@ -127,6 +138,9 @@ class Ai_Agent:
 
 
 
-    def getAction(self, event, graphics, state : State, attackerTurn : bool):
-        return self.alphaBetaPruning(state, [], attackerTurn, None, 0, -math.inf, math.inf)[1]
+    def get_Action(self, event = None, graphics = None, state : State = None, attackerTurn : bool = None, train = False):
+        f = self.alphaBetaPruning(state, self.player == Player.ATTACKER, None, 0, -math.inf, math.inf)[1]
+
+        #print(f)
+        return f
 

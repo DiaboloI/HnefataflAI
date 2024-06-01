@@ -3,16 +3,15 @@ from Hnefatafl import Hnefatafl
 from DQN_Agent_Deep import DQN_Agent
 from ReplayBuffer import ReplayBuffer
 from Random_Agent import Random_Agent
-from Fix_Agent import Fix_Agent
 import torch
 from Tester import Tester
 
 import requests
 
 epochs = 3000000
-start_epoch = 0
+start_epoch = 595000
 C = 4
-learning_rate = 0.001
+learning_rate = 0.0001
 batch_size = 64
 env = Hnefatafl()
 MIN_Buffer = 4000
@@ -27,7 +26,7 @@ random_results_path_white = f'Data/random_results_{File_Num_white}.pth'
 path_best_random_white = f'Data/best_random_params_{File_Num_white}.pth'
 
 File_Num_black = 111
-path_load_black= f'Data/best_random_params_71.pth'
+path_load_black= f'Data/best_params_71.pth'
 path_Save_black=f'Data/params_{File_Num_black}.pth'
 path_best_black = f'Data/best_params_{File_Num_black}.pth'
 buffer_path_black = f'Data/buffer_{File_Num_black}.pth'
@@ -43,7 +42,7 @@ path_best_random_black = f'Data/best_random_params_{File_Num_black}.pth'
 def main ():
 
     # attacker:
-    player1 = DQN_Agent(player=1, env=env,parametes_path=path_load_white)
+    player1 = DQN_Agent(player=1, env=env,parametes_path=path_Save_white)
     player_hat1 = DQN_Agent(player=1, env=env,train=False)
 
     Q1 = player1.DQN
@@ -52,7 +51,7 @@ def main ():
     player_hat1.DQN = Q1_hat
 
     # defender:
-    player2 = DQN_Agent(player=-1, env=env,parametes_path=path_load_black)
+    player2 = DQN_Agent(player=-1, env=env,parametes_path=path_Save_black)
     player_hat2 = DQN_Agent(player=-1, env=env,train=False)
 
     Q2 = player2.DQN
@@ -63,9 +62,9 @@ def main ():
 
 
 
-    buffer1 = ReplayBuffer(path=None) # None
+    buffer1 = ReplayBuffer(path='') # None
 
-    buffer2 = ReplayBuffer(path=None) # None
+    buffer2 = ReplayBuffer(path='') # None
 
     results_file1 = None # torch.load(results_path)
     results1 =  [] #results_file['results'] # []
@@ -87,7 +86,6 @@ def main ():
 
     tester_random1 = Tester(player1=player1, player2=Random_Agent(player=-1, env=env), env=env)
     tester_random2 = Tester(player1=Random_Agent(player=1, env=env), player2=player2, env=env)
-    tester_random3 = Tester(player1=player1, player2=player2, env=env)
 
     random_results1 = [] #torch.load(random_results_path)   # []
     best_random1 = 0 # max(random_results)# -100
@@ -198,34 +196,29 @@ def main ():
             results2.append(res2)
             if best_res2 > res2:
                 best_res2 = res2
-                player1.save_param(path_best_black)
-
+                player2.save_param(path_best_black)
             res2 = 0
 
         if (epoch+1) % 1000 == 0:
             test1 = tester_random1(100)
-            test_score1 = test1[0]-test1[1]
+            test_score1 = test1[0]
 
             test2 = tester_random2(100)
-            test_score2 = test2[0]-test2[1]
-
-            test3 = tester_random3(100)
-            test_score3 = test3[0]-test3[1]
+            test_score2 = test2[1]
 
             if best_random1 < test_score1:
                 best_random1 = test_score1
                 player1.save_param(path_best_random_white)
 
-            if best_random2 > test_score2:
+            if best_random2 < test_score2:
                 best_random2 = test_score2
                 player2.save_param(path_best_random_black)
 
             print('WHITE: test',test1, 'best_random:', best_random1)
             print('BLACK: test',test2, 'best_random:', best_random2)
-            print('BLACK VS WHITE: test',test3)
 
             try:
-                r = requests.post("https://ntfy.sh/dqnhnefatafltraining2", data=f'In epoch {epoch+1}: WHITE: test results: {test1}, averageloss: {avgLoss1}, best_random: {best_random1}. BLACK: test results: {test2}, averageloss: {avgLoss2}, best_random: {best_random2}'.encode(encoding='utf-8'))
+                r = requests.post("https://ntfy.sh/dqnhnefatafltraining2", data=f'In epoch {epoch+1}: WHITE: test results: {test1}, averageloss: {avgLoss1}, best_random: {best_random1}, best_res: {best_res1}. BLACK: test results: {test2}, averageloss: {avgLoss2}, best_random: {best_random2}, best_res: {best_res2}'.encode(encoding='utf-8'))
                 r.raise_for_status()
             except requests.exceptions.RequestException as errex:
                 print("Exception request")
