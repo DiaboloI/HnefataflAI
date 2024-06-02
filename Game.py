@@ -10,8 +10,8 @@ from State import State
 from Hnefatafl import Hnefatafl
 import time
 
-File_Num = 20
-path_Save=f'Data/best_params_{File_Num}.pth'
+path_Save=f'Data/best_random_params_75.pth'
+path_Save2=f'Data/best_random_params_95.pth'
 
 def main ():
 
@@ -22,10 +22,10 @@ def main ():
     hnefatafl = Hnefatafl()
     graphics = Graphics(win)
     graphics.onGame = True
-    attacker = Human_Agent(Player.ATTACKER)
+    #attacker = Human_Agent(Player.ATTACKER)
     #attacker = Random_Agent(Player.ATTACKER, hnefatafl)
     #attacker = DQN_Agent(Player.ATTACKER, path_Save, False, hnefatafl)
-    #attacker = Ai_Agent(Player.ATTACKER)
+    attacker = Ai_Agent(Player.ATTACKER)
     defender = Human_Agent(Player.DEFENDER)
     #defender = Ai_Agent(Player.DEFENDER)
     #defender = Random_Agent(Player.DEFENDER, hnefatafl)

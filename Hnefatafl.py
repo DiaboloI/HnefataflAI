@@ -121,13 +121,13 @@ class Hnefatafl:
         moved = False
         if not self.isOutofRange(row_col):
             if self.isAPiece(row_col) and self.isPieceTurn(row_col, attackerTurn):
-                state.possibleMoves = self.get_piece_actions(row_col, self.state)
-                state.currentPiece = row_col
-            elif row_col in state.possibleMoves:
-                self.state = self.get_next_state((state.currentPiece + row_col), self.state)
-                state.possibleMoves = []
+                self.state.possibleMoves = self.get_piece_actions(row_col, self.state)
+                self.state.currentPiece = row_col
+            elif row_col in self.state.possibleMoves:
+                self.state = self.get_next_state((self.state.currentPiece + row_col), self.state)
+                self.state.possibleMoves = []
                 moved = True
-        return state.possibleMoves.copy(), moved
+        return self.state.possibleMoves.copy(), moved
 
     def captured(self, state : State, square):
         state.board[square[0]][square[1]] = 0

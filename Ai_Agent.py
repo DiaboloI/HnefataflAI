@@ -138,7 +138,7 @@ class Ai_Agent:
 
 
 
-    def get_Action(self, event = None, graphics = None, state : State = None, attackerTurn : bool = None, train = False):
+    def get_Action(self, events = None, graphics = None, state : State = None, attackerTurn : bool = None, train = False):
         f = self.alphaBetaPruning(state, self.player == Player.ATTACKER, None, 0, -math.inf, math.inf)[1]
 
         #print(f)

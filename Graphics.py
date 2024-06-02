@@ -13,7 +13,7 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
         # self.board = state.board
         # self.rows, self.cols = self.board.shape
         self.win = win 
-        self.moveCount = 1
+        self.moveCount = 0
         self.onGame = False
         self.loadImages()
     
@@ -237,7 +237,7 @@ class Graphics: #TODO: fix row_col to col_row so it will be x_y as is traditiona
 
     def draw(self, state, possibleMoves, attackerTurn):
         self.win.fill(LIGHTGRAY)
-        self.drawAllSquares(state)
+        self.drawAllSquares()
         self.drawBorder()
         self.drawTablesandSits()
         self.draw_all_pieces(state)
